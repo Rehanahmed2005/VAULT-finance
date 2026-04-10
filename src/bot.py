@@ -14,6 +14,8 @@ logging.basicConfig(
     level=logging.INFO
 )
 
+CHOOSING, TYPING = range(2)
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     keyboard = [[InlineKeyboardButton(text="💸 Expense", callback_data="expense"),
@@ -26,6 +28,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text="V.A.U.L.T. initialized. Your financial system is now active, Mr. Ahmed.",
     reply_markup = reply_markup
 )
+    return CHOOSING
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -34,6 +37,12 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text(text="Where are we Burning the money, sir")
     elif query.data == 'income':
         await query.edit_message_text(text="Money Laundering, sir?")
+    
+    return TYPING
+
+async def typing_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = update.message.text
+    await update.message.reply_text(f"Got it, {text}")
 
 
 if __name__ == '__main__':
