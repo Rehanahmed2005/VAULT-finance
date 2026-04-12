@@ -2,19 +2,21 @@ import logging
 import os
 
 from dotenv import load_dotenv
+from models import Transaction
+
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import ApplicationBuilder, CallbackQueryHandler, ContextTypes, CommandHandler
 
 load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CallbackQueryHandler, ContextTypes, CommandHandler
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
 
-CHOOSING, TYPING = range(2)
+CHOOSING, TYPING, CHOOSING_CATEGORY = range(3)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
@@ -33,6 +35,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
+
+    context.user_data["trans_type"] = query.data
+
     if query.data == 'expense':
         await query.edit_message_text(text="Where are we Burning the money, sir")
     elif query.data == 'income':
@@ -41,8 +46,29 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return TYPING
 
 async def typing_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = update.message.text
-    await update.message.reply_text(f"Got it, {text}")
+    try:
+        parts = update.message.text.split(" ", 1)
+        amount = float(parts[0])
+        note = parts[1]
+    except (IndexError, ValueError):
+        await update.message.reply_text("Use format: <amount> <note> (e.g., 500 food), Sir.")
+        return TYPING
+
+    context.user_data["amount"] = amount
+    context.user_data["note"] = note
+
+    category_keyboard = [[InlineKeyboardButton(text="Groceries", callback_data="Groceries"),
+                        InlineKeyboardButton(text="Transport", callback_data="Transport"),
+                        InlineKeyboardButton(text="Entertainment", callback_data="Entertainment"),
+                        InlineKeyboardButton(text="Food(Outside)", callback_data="Food(Outside)"),
+                        InlineKeyboardButton(text="Create new Category", callback_data="Create new Category"),]]
+    
+    reply_markup = InlineKeyboardMarkup(category_keyboard)
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text="Select a category for this transaction, sir.",
+        reply_markup=reply_markup
+    )
 
 
 if __name__ == '__main__':
