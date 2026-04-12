@@ -57,11 +57,13 @@ async def typing_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["amount"] = amount
     context.user_data["note"] = note
 
-    category_keyboard = [[InlineKeyboardButton(text="Groceries", callback_data="Groceries"),
-                        InlineKeyboardButton(text="Transport", callback_data="Transport"),
-                        InlineKeyboardButton(text="Entertainment", callback_data="Entertainment"),
-                        InlineKeyboardButton(text="Food(Outside)", callback_data="Food(Outside)"),
-                        InlineKeyboardButton(text="Create new Category", callback_data="Create new Category"),]]
+    category_keyboard = [
+    [InlineKeyboardButton("🛒 Groceries", callback_data="Groceries"),
+     InlineKeyboardButton("🚗 Transport", callback_data="Transport")],
+    [InlineKeyboardButton("🎬 Entertainment", callback_data="Entertainment"),
+     InlineKeyboardButton("🍔 Food", callback_data="Food")],
+    [InlineKeyboardButton("➕ New Category", callback_data="new_category")]
+    ]
     
     reply_markup = InlineKeyboardMarkup(category_keyboard)
     await context.bot.send_message(
