@@ -72,6 +72,18 @@ async def typing_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=reply_markup
     )
 
+    return CHOOSING_CATEGORY
+
+async def category_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    category = query.data
+
+    amount = context.user_data("amount")
+    note = context.user_data("note")
+    trans_type = context.user_data("trans_type")
+    
 
 if __name__ == '__main__':
     application = ApplicationBuilder().token(TOKEN).build()
