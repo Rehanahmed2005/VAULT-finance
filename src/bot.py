@@ -3,6 +3,7 @@ import os
 
 from dotenv import load_dotenv
 from models import Transaction
+from logic import load_transactions, save_transaction, save_transactions
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CallbackQueryHandler, ContextTypes, CommandHandler
@@ -83,7 +84,11 @@ async def category_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     amount = context.user_data("amount")
     note = context.user_data("note")
     trans_type = context.user_data("trans_type")
-    
+
+    transaction = Transaction(amount=amount, note=note, category=category, trans_type=trans_type)
+    transactions = load_transactions()   
+    transactions.append(transaction)   
+    save_transactions(transactions)         
 
 if __name__ == '__main__':
     application = ApplicationBuilder().token(TOKEN).build()
