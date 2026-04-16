@@ -30,7 +30,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id=update.effective_chat.id, 
     text="V.A.U.L.T. initialized. Your financial system is now active, Mr. Ahmed.",
     reply_markup = reply_markup
-)
+    )
+    
     return CHOOSING
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -81,9 +82,9 @@ async def category_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     category = query.data
 
-    amount = context.user_data("amount")
-    note = context.user_data("note")
-    trans_type = context.user_data("trans_type")
+    amount = context.user_data["amount"]
+    note = context.user_data["note"]
+    trans_type = context.user_data["trans_type"]
 
     transaction = Transaction(amount=amount, note=note, category=category, trans_type=trans_type)
     transactions = load_transactions()   
