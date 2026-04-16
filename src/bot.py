@@ -3,10 +3,10 @@ import os
 
 from dotenv import load_dotenv
 from models import Transaction
-from logic import load_transactions, save_transaction, save_transactions
+from logic import load_transactions, save_transactions
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CallbackQueryHandler, ContextTypes, CommandHandler
+from telegram.ext import ApplicationBuilder, CallbackQueryHandler, ContextTypes, CommandHandler, ConversationHandler, MessageHandler, filters
 
 load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
@@ -31,7 +31,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text="V.A.U.L.T. initialized. Your financial system is now active, Mr. Ahmed.",
     reply_markup = reply_markup
     )
-    
+
     return CHOOSING
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -89,13 +89,27 @@ async def category_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     transaction = Transaction(amount=amount, note=note, category=category, trans_type=trans_type)
     transactions = load_transactions()   
     transactions.append(transaction)   
-    save_transactions(transactions)         
+    save_transactions(transactions)    
+
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text=f"Transaction recorded. Your ledger has been updated."
+    )
+
+    return ConversationHandler.END     
 
 if __name__ == '__main__':
     application = ApplicationBuilder().token(TOKEN).build()
 
-    start_handler = CommandHandler('start', start)
-    application.add_handler(CallbackQueryHandler(button_handler))
-    application.add_handler(start_handler)
+    conv_handler = ConversationHandler(
+        entry_points=[CommandHandler('start', start)],
+        states={
+            CHOOSING: [CallbackQueryHandler(button_handler)],
+            TYPING: [MessageHandler(filters.TEXT & ~filters.COMMAND, typing_handler)],
+            CHOOSING_CATEGORY: [CallbackQueryHandler(category_handler)]
+        },
+        fallbacks=[CommandHandler('start', start)]
+    )
 
+    application.add_handler(conv_handler)
     application.run_polling()
