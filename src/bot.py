@@ -28,9 +28,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     await context.bot.send_message(
-    chat_id=update.effective_chat.id, 
-    text="V.A.U.L.T. initialized. Your financial system is now active, Mr. Ahmed.",
-    reply_markup = reply_markup
+        chat_id=update.effective_chat.id, 
+        text="V.A.U.L.T. initialized. Your financial system is now active, Mr. Ahmed.",
+        reply_markup = reply_markup
     )
 
     return CHOOSING
@@ -61,18 +61,18 @@ async def typing_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["note"] = note
 
     category_keyboard = [
-    [InlineKeyboardButton("🛒 Groceries", callback_data="Groceries"),
-     InlineKeyboardButton("🚗 Transport", callback_data="Transport")],
-    [InlineKeyboardButton("🎬 Entertainment", callback_data="Entertainment"),
-     InlineKeyboardButton("🍔 Food", callback_data="Food")],
-    [InlineKeyboardButton("➕ New Category", callback_data="new_category")]
+        [InlineKeyboardButton("🛒 Groceries", callback_data="Groceries"),
+        InlineKeyboardButton("🚗 Transport", callback_data="Transport")],
+        [InlineKeyboardButton("🎬 Entertainment", callback_data="Entertainment"),
+        InlineKeyboardButton("🍔 Food", callback_data="Food")],
+        [InlineKeyboardButton("➕ New Category", callback_data="new_category")]
     ]
     
     reply_markup = InlineKeyboardMarkup(category_keyboard)
 
     msg = await update.message.reply_text(
-    "Select a category for this transaction, sir.",
-    reply_markup=reply_markup
+        "Select a category for this transaction, sir.",
+        reply_markup=reply_markup
     )
 
     context.user_data["category_msg_id"] = msg.message_id
