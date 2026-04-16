@@ -1,4 +1,5 @@
 import logging
+from multiprocessing import context
 import os
 
 from dotenv import load_dotenv
@@ -68,11 +69,13 @@ async def typing_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     
     reply_markup = InlineKeyboardMarkup(category_keyboard)
-    await context.bot.send_message(
-        chat_id=update.effective_chat.id,
-        text="Select a category for this transaction, sir.",
-        reply_markup=reply_markup
+
+    msg = await update.message.reply_text(
+    "Select a category for this transaction, sir.",
+    reply_markup=reply_markup
     )
+
+    context.user_data["category_msg_id"] = msg.message_id
 
     return CHOOSING_CATEGORY
 
@@ -91,9 +94,10 @@ async def category_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     transactions.append(transaction)   
     save_transactions(transactions)    
 
-    await context.bot.send_message(
+    await context.bot.edit_message_text(
         chat_id=update.effective_chat.id,
-        text=f"Transaction recorded. Your ledger has been updated."
+        message_id=context.user_data["category_msg_id"],
+        text="Transaction recorded. Your ledger has been updated."
     )
 
     return ConversationHandler.END     
