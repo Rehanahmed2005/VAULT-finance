@@ -49,12 +49,16 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return TYPING
 
 async def typing_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    
+    text: str = update.message.text.strip()
+
     try:
-        parts = update.message.text.split(" ", 1)
-        amount = float(parts[0])
-        note = parts[1]
-    except (IndexError, ValueError):
-        await update.message.reply_text("Use format: <amount> <note> (e.g., 500 food), Sir.")
+        amount_str, note = text.split(maxsplit=1)
+        amount = float(amount_str)
+    except ValueError:
+        await update.message.reply_text(
+            "Format: <amount> <note> (e.g., 500 food). Try again, Sir."
+        )
         return TYPING
 
     context.user_data["amount"] = amount
