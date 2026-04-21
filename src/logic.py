@@ -15,6 +15,7 @@ def save_transactions(transactions):
         json.dump(data, f, indent=2)
 
 def get_income_sources(transactions):
+    """Extracts unique income sources from a list of transactions."""
     income_sources = []
 
     for transaction in transactions:
