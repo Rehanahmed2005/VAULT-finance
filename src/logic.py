@@ -14,6 +14,14 @@ def save_transactions(transactions):
         data = [entry.to_dict() for entry in transactions]
         json.dump(data, f, indent=2)
 
+def get_income_sources(transactions):
+    income_sources = []
+
+    for transaction in transactions:
+        if transaction.trans_type == "income":
+            income_sources.append(transaction.category)
+    return list(set(income_sources))
+
 def get_balance(transaction_list: list) -> float:
     """Calculate total balance from transactions."""
     balance = 0
