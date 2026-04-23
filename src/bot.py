@@ -3,7 +3,7 @@ import os
 
 from dotenv import load_dotenv
 from models import Transaction
-from logic import load_transactions, save_transactions
+from logic import load_transactions, save_transactions, get_income_sources
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CallbackQueryHandler, ContextTypes, CommandHandler, ConversationHandler, MessageHandler, filters
@@ -60,25 +60,29 @@ async def typing_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return TYPING
 
-    context.user_data["amount"] = amount
+    context.user_data["amount"] = amount 
     context.user_data["note"] = note
 
-    category_keyboard = [
-        [InlineKeyboardButton("🛒 Groceries", callback_data="Groceries"),
-        InlineKeyboardButton("🚗 Transport", callback_data="Transport")],
-        [InlineKeyboardButton("🎬 Entertainment", callback_data="Entertainment"),
-        InlineKeyboardButton("🍔 Food", callback_data="Food")],
-        [InlineKeyboardButton("➕ New Category", callback_data="new_category")]
-    ]
+    if context.user_data["trans_type"] == 'expense':
+        category_keyboard = [
+            [InlineKeyboardButton("🛒 Groceries", callback_data="Groceries"),
+            InlineKeyboardButton("🚗 Transport", callback_data="Transport")],
+            [InlineKeyboardButton("🎬 Entertainment", callback_data="Entertainment"),
+            InlineKeyboardButton("🍔 Food", callback_data="Food")],
+            [InlineKeyboardButton("➕ New Category", callback_data="new_category")]
+        ]
+        
+        reply_markup = InlineKeyboardMarkup(category_keyboard)
+
+        msg = await update.message.reply_text(
+            "Select a category for this transaction, sir.",
+            reply_markup=reply_markup
+        )
+
+        context.user_data["category_msg_id"] = msg.message_id
     
-    reply_markup = InlineKeyboardMarkup(category_keyboard)
-
-    msg = await update.message.reply_text(
-        "Select a category for this transaction, sir.",
-        reply_markup=reply_markup
-    )
-
-    context.user_data["category_msg_id"] = msg.message_id
+    elif context.user_data["trans_type"] == 'income':
+        pass
 
     return CHOOSING_CATEGORY
 
