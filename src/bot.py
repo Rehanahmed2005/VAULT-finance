@@ -80,32 +80,88 @@ async def typing_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         context.user_data["category_msg_id"] = msg.message_id
+
+        return CHOOSING_CATEGORY
     
     elif context.user_data["trans_type"] == 'income':
-        pass
+        income_keywords = ["from", "received", "got", "credited", "on", "for"]
 
-    return CHOOSING_CATEGORY
+        candidate = note.lower()
+
+        for keyword in income_keywords:
+            if keyword in candidate:
+                candidate = candidate.replace(keyword, " ").strip()
+        
+        transactions = load_transactions()
+        sources = get_income_sources(transactions)
+
+        if candidate in sources:
+            category = candidate
+            transaction = Transaction(trans_type=context.user_data["trans_type"], amount=amount, note=note, category=category)
+            
+            transactions.append(transaction)
+            save_transactions(transactions)
+            await update.message.reply_text(
+                f"Transaction recorded under \"{category}\". Your ledger has been updated."
+            )
+
+            return ConversationHandler.END
+    
+        else:
+            context.user_data["candidate"] = candidate
+
+            source_keyboard = []
+            if sources == []:
+                source_keyboard = [[InlineKeyboardButton("➕ New Source", callback_data="new_source")]]
+            else:
+                source_keyboard = [
+                    [InlineKeyboardButton(source, callback_data=source) for source in sources],
+                    [InlineKeyboardButton("➕ New Source", callback_data="new_source")]]
+                
+            reply_markup = InlineKeyboardMarkup(source_keyboard)
+                
+            await update.message.reply_text(
+                f"New Income source \"{candidate}\" detected, what would you like to do?",
+                reply_markup=reply_markup
+            )
+        
+            return CHOOSING_CATEGORY
 
 async def category_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
     category = query.data
-
     amount = context.user_data["amount"]
     note = context.user_data["note"]
     trans_type = context.user_data["trans_type"]
+
+    if trans_type == "expense":
+        category = query.data
+
+    elif trans_type == "income":
+
+        if query.data == "new_source":
+            category = context.user_data["candidate"]
+        else:
+            category = query.data
 
     transaction = Transaction(amount=amount, note=note, category=category, trans_type=trans_type)
     transactions = load_transactions()   
     transactions.append(transaction)   
     save_transactions(transactions)    
 
-    await context.bot.edit_message_text(
+    if trans_type == "expense":
+        await context.bot.edit_message_text(
         chat_id=update.effective_chat.id,
         message_id=context.user_data["category_msg_id"],
         text="Transaction recorded. Your ledger has been updated."
     )
+    
+    elif trans_type == "income":
+        await query.edit_message_text(
+            text=f"Income of {amount} recorded under \"{category}\". Ledger updated."
+        )
 
     return ConversationHandler.END     
 
