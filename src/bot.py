@@ -17,7 +17,7 @@ logging.basicConfig(
     level=logging.INFO
 )
 
-CHOOSING, TYPING, CHOOSING_CATEGORY = range(3)
+CHOOSING, TYPING, CHOOSING_CATEGORY, TYPING_CATEGORY = range(4)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
@@ -136,6 +136,12 @@ async def category_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     note = context.user_data["note"]
     trans_type = context.user_data["trans_type"]
 
+    if query.data == "new_category":
+        await query.edit_message_text(
+            "Please type the name of the new category, sir."
+        )
+        return TYPING_CATEGORY
+    
     if trans_type == "expense":
         category = query.data
 
@@ -163,7 +169,19 @@ async def category_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             text=f"Income of {amount} recorded under \"{category}\". Ledger updated."
         )
 
-    return ConversationHandler.END     
+    return ConversationHandler.END    
+
+async def custom_category_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    category = update.message.text.strip()
+
+    transaction = Transaction(amount=context.user_data["amount"], note=context.user_data["note"], category=category, trans_type=context.user_data["trans_type"])
+    transactions = load_transactions()   
+    transactions.append(transaction)   
+    save_transactions(transactions) 
+
+    await update.message.reply_text(
+        f"Transaction recorded under \"{category}\". Your ledger has been updated."
+    )
 
 if __name__ == '__main__':
     application = ApplicationBuilder().token(TOKEN).build()
@@ -173,7 +191,8 @@ if __name__ == '__main__':
         states={
             CHOOSING: [CallbackQueryHandler(button_handler)],
             TYPING: [MessageHandler(filters.TEXT & ~filters.COMMAND, typing_handler)],
-            CHOOSING_CATEGORY: [CallbackQueryHandler(category_handler)]
+            CHOOSING_CATEGORY: [CallbackQueryHandler(category_handler)],
+            TYPING_CATEGORY: [MessageHandler(filters.TEXT & ~filters.COMMAND, custom_category_handler)]
         },
         fallbacks=[CommandHandler('start', start)]
     )
