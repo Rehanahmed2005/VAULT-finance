@@ -3,7 +3,7 @@ import os
 
 from dotenv import load_dotenv
 from models import Transaction
-from logic import load_transactions, save_transactions, get_income_sources
+from logic import load_transactions, save_transactions, get_income_sources, record_transaction
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CallbackQueryHandler, ContextTypes, CommandHandler, ConversationHandler, MessageHandler, filters
@@ -97,10 +97,9 @@ async def typing_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         if candidate in sources:
             category = candidate
-            transaction = Transaction(trans_type=context.user_data["trans_type"], amount=amount, note=note, category=category)
-            
-            transactions.append(transaction)
-            save_transactions(transactions)
+
+            record_transaction(trans_type=context.user_data["trans_type"], amount=amount, category=category, note=note)
+    
             await update.message.reply_text(
                 f"Transaction recorded under \"{category}\". Your ledger has been updated."
             )
@@ -152,10 +151,7 @@ async def category_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             category = query.data
 
-    transaction = Transaction(amount=amount, note=note, category=category, trans_type=trans_type)
-    transactions = load_transactions()   
-    transactions.append(transaction)   
-    save_transactions(transactions)    
+    record_transaction(trans_type=trans_type, amount=amount, category=category, note=note)
 
     if trans_type == "expense":
         await context.bot.edit_message_text(
@@ -174,11 +170,8 @@ async def category_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def custom_category_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     category = update.message.text.strip()
 
-    transaction = Transaction(amount=context.user_data["amount"], note=context.user_data["note"], category=category, trans_type=context.user_data["trans_type"])
-    transactions = load_transactions()   
-    transactions.append(transaction)   
-    save_transactions(transactions) 
-
+    record_transaction(trans_type=context.user_data["trans_type"], amount=context.user_data["amount"], category=category, note=context.user_data["note"])
+    
     await update.message.reply_text(
         f"Transaction recorded under \"{category}\". Your ledger has been updated."
     )

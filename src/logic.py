@@ -51,3 +51,9 @@ def get_suggestions(suggestions):
         count[transaction.category] = count.get(transaction.category, 0) + 1
     count = sorted(count, key=lambda x: count[x], reverse=True)[:3]
     return count
+
+def record_transaction(trans_type, amount, category, note):
+    transaction = Transaction(trans_type=trans_type, amount=amount, category=category, note=note)
+    transactions = load_transactions()
+    transactions.append(transaction)
+    save_transactions(transactions)
