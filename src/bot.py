@@ -3,7 +3,7 @@ import os
 
 from dotenv import load_dotenv
 from models import Transaction
-from logic import load_transactions, save_transactions, get_income_sources, record_transaction
+from logic import get_balance, load_transactions, get_category_summary, get_income_sources, record_transaction
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CallbackQueryHandler, ContextTypes, CommandHandler, ConversationHandler, MessageHandler, filters
@@ -176,6 +176,32 @@ async def custom_category_handler(update: Update, context: ContextTypes.DEFAULT_
         f"Transaction recorded under \"{category}\". Your ledger has been updated."
     )
 
+    return ConversationHandler.END
+
+async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    transactions = load_transactions()
+    balance = get_balance(transactions)
+    await update.message.reply_text(
+        f"Your current balance is: ₹{balance}"
+    )
+
+    income = sum(t.amount for t in transactions if t.trans_type == "income")
+    expenses = sum(t.amount for t in transactions if t.trans_type == "expense")
+
+    await update.message.reply_text(
+        f"Incoming = ₹{income}\nExpenses = ₹{expenses}"
+    )
+
+    summary = get_category_summary(transactions)
+    category_text = ""
+
+    for category, amount in summary.items():
+        category_text += f"{category}: ₹{amount}\n"
+
+    await update.message.reply_text(
+        f"Category Summary:\n{category_text}"
+    )
+
 if __name__ == '__main__':
     application = ApplicationBuilder().token(TOKEN).build()
 
@@ -191,4 +217,6 @@ if __name__ == '__main__':
     )
 
     application.add_handler(conv_handler)
+    application.add_handler(CommandHandler("stats", stats))
+    
     application.run_polling()
