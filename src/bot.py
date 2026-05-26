@@ -38,6 +38,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
+    if query.data == "done":
+        await query.edit_message_text("Ledger secured. Until next time, sir.")
+        return ConversationHandler.END
+
     context.user_data["trans_type"] = query.data
 
     if query.data == 'expense':
@@ -99,12 +103,14 @@ async def typing_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             category = candidate
 
             record_transaction(trans_type=context.user_data["trans_type"], amount=amount, category=category, note=note)
-    
+        
             await update.message.reply_text(
                 f"Transaction recorded under \"{category}\". Your ledger has been updated."
-            )
+                )
 
-            return ConversationHandler.END
+            await show_main_menu(update, context)
+
+            return CHOOSING
     
         else:
             context.user_data["candidate"] = candidate
@@ -165,7 +171,8 @@ async def category_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             text=f"Income of {amount} recorded under \"{category}\". Ledger updated."
         )
 
-    return ConversationHandler.END    
+    await show_main_menu(update, context)
+    return CHOOSING
 
 async def custom_category_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     category = update.message.text.strip()
@@ -176,7 +183,8 @@ async def custom_category_handler(update: Update, context: ContextTypes.DEFAULT_
         f"Transaction recorded under \"{category}\". Your ledger has been updated."
     )
 
-    return ConversationHandler.END
+    await show_main_menu(update, context)
+    return CHOOSING
 
 async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     transactions = load_transactions()
@@ -201,6 +209,27 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         f"Category Summary:\n{category_text}"
     )
+
+async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    keyboard = [
+        [InlineKeyboardButton("💸 Expense", callback_data="expense"),
+        InlineKeyboardButton("💰 Income", callback_data="income")],
+        [InlineKeyboardButton("✅ That's all", callback_data="done")]
+    ]
+    
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    if update.message:
+        await update.message.reply_text(
+            "Alright sir, More transactions to record?",
+            reply_markup=reply_markup
+        )
+    else:
+        query = update.callback_query
+        await query.message.reply_text(
+            "Alright sir, More transactions to record?",
+            reply_markup=reply_markup
+        )
 
 if __name__ == '__main__':
     application = ApplicationBuilder().token(TOKEN).build()
