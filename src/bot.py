@@ -231,6 +231,13 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=reply_markup
         )
 
+async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data.clear()
+    await update.message.reply_text(
+        "Transaction cancelled! Ledger secured. Until next time, sir."
+    )
+    return await show_main_menu(update, context)
+
 if __name__ == '__main__':
     application = ApplicationBuilder().token(TOKEN).build()
 
@@ -242,7 +249,8 @@ if __name__ == '__main__':
             CHOOSING_CATEGORY: [CallbackQueryHandler(category_handler)],
             TYPING_CATEGORY: [MessageHandler(filters.TEXT & ~filters.COMMAND, custom_category_handler)]
         },
-        fallbacks=[CommandHandler('start', start)]
+        fallbacks=[CommandHandler('start', start),
+                   CommandHandler('cancel', cancel)]
     )
 
     application.add_handler(conv_handler)
