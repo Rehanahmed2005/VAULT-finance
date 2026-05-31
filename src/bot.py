@@ -78,7 +78,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
 
         await query.message.reply_text(history_text)
-        return
+        return CHOOSING
 
     context.user_data["trans_type"] = query.data
 
@@ -291,6 +291,8 @@ async def history(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=reply_markup
     )
 
+    return CHOOSING
+
 if __name__ == '__main__':
     application = ApplicationBuilder().token(TOKEN).build()
 
@@ -298,7 +300,8 @@ if __name__ == '__main__':
         entry_points=[CommandHandler('start', start),
                       CommandHandler('history', history)],
         states={
-            CHOOSING: [CallbackQueryHandler(button_handler)],
+            CHOOSING: [CallbackQueryHandler(button_handler), 
+                       CommandHandler('history', history)],
             TYPING: [MessageHandler(filters.TEXT & ~filters.COMMAND, typing_handler)],
             CHOOSING_CATEGORY: [CallbackQueryHandler(category_handler)],
             TYPING_CATEGORY: [MessageHandler(filters.TEXT & ~filters.COMMAND, custom_category_handler)]
