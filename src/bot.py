@@ -41,6 +41,44 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if query.data == "done":
         await query.edit_message_text("Ledger secured. Until next time, sir.")
         return ConversationHandler.END
+    
+    if query.data in ["expense_history", "income_history", "both_history"]:
+
+        transactions = load_transactions()
+
+        if query.data == "expense_history":
+            transactions = [
+                t for t in transactions
+                if t.trans_type == "expense"
+            ]
+
+        elif query.data == "income_history":
+            transactions = [
+                t for t in transactions
+                if t.trans_type == "income"
+            ]
+
+        last_five = transactions[-5:][::-1]
+
+        if not last_five:
+            await query.message.reply_text(
+                "No matching transactions found, sir."
+            )
+            return
+
+        history_text = "🗂 Last Transactions:\n\n"
+
+        for t in last_five:
+            emoji = "💸" if t.trans_type == "expense" else "💰"
+
+            history_text += (
+                f"{emoji} {t.trans_type.capitalize()}: "
+                f"₹{t.amount} | {t.category} | "
+                f"{t.note} | {t.date}\n"
+            )
+
+        await query.message.reply_text(history_text)
+        return
 
     context.user_data["trans_type"] = query.data
 
@@ -238,11 +276,27 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     return await show_main_menu(update, context)
 
+async def history(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    history_keyboard = [
+        [InlineKeyboardButton("💸 Expense", callback_data="expense_history"),
+         InlineKeyboardButton("💰 Income", callback_data="income_history")],
+        [InlineKeyboardButton("📋 Both", callback_data="both_history")]
+    ]
+
+    reply_markup = InlineKeyboardMarkup(history_keyboard)
+
+    await update.message.reply_text(
+        "Which transactions would you like to view, sir?",
+        reply_markup=reply_markup
+    )
+
 if __name__ == '__main__':
     application = ApplicationBuilder().token(TOKEN).build()
 
     conv_handler = ConversationHandler(
-        entry_points=[CommandHandler('start', start)],
+        entry_points=[CommandHandler('start', start),
+                      CommandHandler('history', history)],
         states={
             CHOOSING: [CallbackQueryHandler(button_handler)],
             TYPING: [MessageHandler(filters.TEXT & ~filters.COMMAND, typing_handler)],
