@@ -1,3 +1,4 @@
+from multiprocessing import connection
 import os
 import psycopg2
 
@@ -34,24 +35,24 @@ def load_transactions():
     connection = get_connection()
     cursor = connection.cursor()
 
-    cursor.execute("SELECT * FROM transactions")
+    cursor.execute("SELECT trans_type, amount, category, note, date FROM transactions")
 
     rows = cursor.fetchall()
     transactions = []
 
     for row in rows:
         transaction = Transaction(
-        trans_type = row[1],
-        amount = row[2],
-        category = row[3],
-        note = row[4],
-        date = row[5]
+        trans_type = row[0],
+        amount = row[1],
+        category = row[2],
+        note = row[3],
+        date = str(row[4])
         )
         transactions.append(transaction)
 
-        return transactions
-        cursor.close()
-        connection.close() 
+    cursor.close()
+    connection.close() 
+    return transactions
 
 
 
