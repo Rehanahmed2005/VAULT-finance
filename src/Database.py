@@ -1,9 +1,9 @@
-from multiprocessing import connection
 import os
 import psycopg2
 
 from dotenv import load_dotenv
 from models import Transaction
+from datetime import datetime
 
 load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
@@ -54,5 +54,18 @@ def load_transactions():
     connection.close() 
     return transactions
 
+def record_transaction(trans_type, amount, category, note):
+    
+    date = datetime.now().strftime("%Y-%m-%d")
+    
+    connection = get_connection()
+    cursor = connection.cursor()
+    
+    cursor.execute("""
+        INSERT INTO transactions (trans_type, amount, category, note, date)
+        VALUES (%s, %s, %s, %s, %s)
+    """, (trans_type, amount, category, note, date))
 
-
+    connection.commit()
+    cursor.close()
+    connection.close()
