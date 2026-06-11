@@ -3,7 +3,8 @@ import os
 
 from dotenv import load_dotenv
 from models import Transaction
-from logic import get_balance, load_transactions, get_category_summary, get_income_sources, record_transaction
+from logic import get_balance, get_category_summary, get_income_sources
+from Database import load_transactions, record_transaction, init_db
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CallbackQueryHandler, ContextTypes, CommandHandler, ConversationHandler, MessageHandler, filters
@@ -312,5 +313,7 @@ if __name__ == '__main__':
 
     application.add_handler(conv_handler)
     application.add_handler(CommandHandler("stats", stats))
+
+    init_db()
     
     application.run_polling()
