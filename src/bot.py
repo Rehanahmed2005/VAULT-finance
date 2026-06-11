@@ -2,7 +2,6 @@ import logging
 import os
 
 from dotenv import load_dotenv
-from models import Transaction
 from logic import get_balance, get_category_summary, get_income_sources
 from Database import load_transactions, record_transaction, init_db
 
