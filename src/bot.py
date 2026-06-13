@@ -38,10 +38,12 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
+    #Main Menu buttons
     if query.data == "done":
         await query.edit_message_text("Ledger secured. Until next time, sir.")
         return ConversationHandler.END
     
+    #history buttons 
     if query.data in ["expense_history", "income_history", "both_history"]:
 
         transactions = load_transactions()
@@ -80,6 +82,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text(history_text)
         return CHOOSING
 
+    #start Buttons 
     context.user_data["trans_type"] = query.data
 
     if query.data == 'expense':
@@ -274,7 +277,10 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "Transaction cancelled! Ledger secured. Until next time, sir."
     )
-    return await show_main_menu(update, context)
+    
+    await show_main_menu(update, context)
+
+    return CHOOSING
 
 async def history(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
