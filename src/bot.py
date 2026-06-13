@@ -77,7 +77,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 f"{t.note} | {t.date}\n"
             )
 
-        await query.message.reply_text(history_text)
+        await query.edit_message_text(history_text)
         return CHOOSING
 
     context.user_data["trans_type"] = query.data
