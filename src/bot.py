@@ -38,12 +38,12 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
-    #Main Menu buttons
+    # Main_menu Button: Handle conversation termination
     if query.data == "done":
         await query.edit_message_text("Ledger secured. Until next time, sir.")
         return ConversationHandler.END
     
-    #history buttons 
+    #history buttons: Handle history viewing options 
     if query.data in ["expense_history", "income_history", "both_history"]:
 
         transactions = load_transactions()
@@ -82,7 +82,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text(history_text)
         return CHOOSING
 
-    #start Buttons 
+    # Handle transaction type selection (Expense/Income)
     context.user_data["trans_type"] = query.data
 
     if query.data == 'expense':
