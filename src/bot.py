@@ -109,14 +109,50 @@ async def typing_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["note"] = note
 
     if context.user_data["trans_type"] == 'expense':
+        
+        transactions = load_transactions()
+        custom_categories = set()
+        
+        for transaction in transactions:
+            if transaction.trans_type == "expense":
+                custom_categories.add(transaction.category)
+
+        default_categories = {
+            "Food",
+            "Transport",
+            "Entertainment",
+            "Groceries"
+        }
+
+        custom_categories -= default_categories
+        custom_categories = list(custom_categories) #convert the set to a list 
+
         category_keyboard = [
             [InlineKeyboardButton("🛒 Groceries", callback_data="Groceries"),
             InlineKeyboardButton("🚗 Transport", callback_data="Transport")],
             [InlineKeyboardButton("🎬 Entertainment", callback_data="Entertainment"),
             InlineKeyboardButton("🍔 Food", callback_data="Food")],
-            [InlineKeyboardButton("➕ New Category", callback_data="new_category")]
         ]
-        
+
+        for i in range(0, len(custom_categories), 2):
+            if i + 1 < len(custom_categories):
+                category_keyboard.append(
+                    [
+                        InlineKeyboardButton( custom_categories[i] , callback_data=custom_categories[i]),
+                        InlineKeyboardButton( custom_categories[i+1], callback_data=custom_categories[i+1])
+                    ]
+                )
+            else:
+                category_keyboard.append(
+                    [InlineKeyboardButton(custom_categories[i], callback_data=custom_categories[i])]
+                )
+
+        category_keyboard.append(
+            [
+                InlineKeyboardButton("➕ New Category", callback_data="new_category")
+            ]
+        )
+
         reply_markup = InlineKeyboardMarkup(category_keyboard)
 
         msg = await update.message.reply_text(
