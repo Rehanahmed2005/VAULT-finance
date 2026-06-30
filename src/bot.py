@@ -66,7 +66,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.message.reply_text(
                 "No matching transactions found, sir."
             )
-            return
+            return CHOOSING
 
         history_text = "🗂 Last Transactions:\n\n"
 
