@@ -52,6 +52,17 @@ def get_suggestions(suggestions):
     count = sorted(count, key=lambda x: count[x], reverse=True)[:3]
     return count
 
+def get_quick_suggestion(transactions):
+    """Suggest the most occuring transaction"""
+    count = {}
+
+    for transaction in transactions:
+        pattern = (transaction.category, transaction.amount, transaction.note)
+        count[pattern] = count.get(pattern, 0) + 1 
+
+    count = sorted(count, key=lambda x: count[x], reverse=True)[:3]
+    return count
+
 def record_transaction(trans_type, amount, category, note):
     transaction = Transaction(trans_type=trans_type, amount=amount, category=category, note=note)
     transactions = load_transactions()
