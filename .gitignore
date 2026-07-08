@@ -1,4 +1,15 @@
+# Environment
 .env
 .venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Local data
 data.json
-__pycache__/.DS_Store
