@@ -2,7 +2,7 @@ import logging
 import os
 
 from dotenv import load_dotenv
-from logic import get_balance, get_category_summary, get_income_sources
+from logic import get_balance, get_category_summary, get_income_sources, get_quick_suggestion
 from Database import load_transactions, record_transaction, init_db
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -21,16 +21,48 @@ CHOOSING, TYPING, CHOOSING_CATEGORY, TYPING_CATEGORY = range(4)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
+    #Quick log for most reoccuring transactions 
+    transactions = load_transactions()[-30:]
+    suggestions = get_quick_suggestion(transactions)
+
+    context.user_data["quick_suggestions"] = suggestions
+
+    suggestionsKeyboard = []
+
+    for i, suggestion in enumerate(suggestions):
+        buttonText = f"{suggestion[0]} - ₹{suggestion[1]} {suggestion[2]}"
+
+        suggestionsKeyboard.append(
+            [
+                InlineKeyboardButton(text=buttonText, callback_data=f"quick_{i}")
+            ]
+        )
+
+    #Main Menu for recording new transaction
     keyboard = [[InlineKeyboardButton(text="💸 Expense", callback_data="expense"),
                 InlineKeyboardButton(text="💰 Income", callback_data="income")]]
     
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    await context.bot.send_message(
+    menu_msg = await context.bot.send_message(
         chat_id=update.effective_chat.id, 
         text="V.A.U.L.T. initialized. Your financial system is now active, Mr. Ahmed.",
         reply_markup = reply_markup
     )
+
+    context.user_data["menu_msg_id"] = menu_msg.message_id
+
+    #msg for Quick Log
+    if suggestions:
+        quick_reply_markup = InlineKeyboardMarkup(suggestionsKeyboard)
+
+        quick_log_msg = await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text="⚡️Quick Log:",
+            reply_markup= quick_reply_markup
+        )
+    
+        context.user_data["quick_log_msg_id"] = quick_log_msg.message_id
 
     return CHOOSING
 
@@ -80,16 +112,47 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
 
         await query.edit_message_text(history_text)
+
+        return CHOOSING
+
+    #Handle the working of quick Log buttons
+    if query.data.startswith("quick_"):
+        suggestions = context.user_data["quick_suggestions"]
+
+        index = int(query.data.split("_")[1]) #splitting the list as ["quick", "i"] into "i" and typecasting to int
+        suggestion = suggestions[index]
+
+        record_transaction(trans_type="expense", amount=suggestion[1], category=suggestion[0], note=suggestion[2])
+
+        await context.bot.delete_message(
+            chat_id=update.effective_chat.id,
+            message_id=context.user_data["menu_msg_id"]
+        )
+
+        await query.edit_message_text(text=f"✅Logged ₹{suggestion[1]} {suggestion[2]} to {suggestion[0]}")
+
         return CHOOSING
 
     # Handle transaction type selection (Expense/Income)
     context.user_data["trans_type"] = query.data
 
+    #async helper to implement the msg deletion logic
+    async def delete_quick_log(update, context):
+        if "quick_log_msg_id" in context.user_data:
+            await context.bot.delete_message(
+                chat_id=update.effective_chat.id,
+                message_id=context.user_data["quick_log_msg_id"]
+            )
+
+    #Hadling the menu button selection
     if query.data == 'expense':
         await query.edit_message_text(text="Where are we Burning the money, sir")
+        await delete_quick_log(update, context)
+
     elif query.data == 'income':
         await query.edit_message_text(text="Money Laundering, sir?")
-    
+        await delete_quick_log(update, context)
+
     return TYPING
 
 async def typing_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -108,6 +171,7 @@ async def typing_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["amount"] = amount 
     context.user_data["note"] = note
 
+    #Custom Categorization
     if context.user_data["trans_type"] == 'expense':
         
         transactions = load_transactions()
