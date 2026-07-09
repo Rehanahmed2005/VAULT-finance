@@ -1,14 +1,3 @@
-import json
-from models import Transaction
-
-def load_transactions():
-    try:
-        with open("data.json", "r") as f:
-            data = json.load(f)
-            return [Transaction.from_dict(entry) for entry in data]
-    except FileNotFoundError:
-        return []
-
 def save_transactions(transactions):
     with open("data.json", "w") as f:
         data = [entry.to_dict() for entry in transactions]
@@ -62,9 +51,3 @@ def get_quick_suggestion(transactions):
 
     count = sorted(count, key=lambda x: count[x], reverse=True)[:3]
     return count
-
-def record_transaction(trans_type, amount, category, note):
-    transaction = Transaction(trans_type=trans_type, amount=amount, category=category, note=note)
-    transactions = load_transactions()
-    transactions.append(transaction)
-    save_transactions(transactions)
