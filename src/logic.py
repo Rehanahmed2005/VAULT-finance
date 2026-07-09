@@ -1,8 +1,3 @@
-def save_transactions(transactions):
-    with open("data.json", "w") as f:
-        data = [entry.to_dict() for entry in transactions]
-        json.dump(data, f, indent=2)
-
 def get_income_sources(transactions):
     """Extracts unique income sources from a list of transactions."""
     income_sources = []
