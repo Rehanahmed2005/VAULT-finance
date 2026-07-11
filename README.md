@@ -133,4 +133,4 @@ Stats card mockup — Pillow-rendered version in progress.
 
 ## License
 
-MIT
+Apache License
