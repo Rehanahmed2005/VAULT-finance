@@ -198,17 +198,17 @@ async def typing_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             InlineKeyboardButton("🍔 Food", callback_data="Food")],
         ]
 
-        for i in range(0, len(custom_categories), 2):
-            if i + 1 < len(custom_categories):
+        for category_index in range(0, len(custom_categories), 2):
+            if category_index + 1 < len(custom_categories):
                 category_keyboard.append(
                     [
-                        InlineKeyboardButton( custom_categories[i] , callback_data=custom_categories[i]),
-                        InlineKeyboardButton( custom_categories[i+1], callback_data=custom_categories[i+1])
+                        InlineKeyboardButton( custom_categories[category_index] , callback_data=custom_categories[category_index]),
+                        InlineKeyboardButton( custom_categories[category_index+1], callback_data=custom_categories[category_index+1])
                     ]
                 )
             else:
                 category_keyboard.append(
-                    [InlineKeyboardButton(custom_categories[i], callback_data=custom_categories[i])]
+                    [InlineKeyboardButton(custom_categories[category_index], callback_data=custom_categories[category_index])]
                 )
 
         category_keyboard.append(
