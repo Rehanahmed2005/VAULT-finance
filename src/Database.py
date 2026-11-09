@@ -19,20 +19,70 @@ def init_db():
     connection = get_connection()
     cursor = connection.cursor()
 
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS transactions (
-            id SERIAL PRIMARY KEY,
-            trans_type VARCHAR(20) NOT NULL,
-            amount DECIMAL NOT NULL,
-            category VARCHAR(100) NOT NULL,
-            note TEXT,
-            date DATE NOT NULL
-        )          
-    """)
+    try:
+        # users table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        """)
 
-    connection.commit()
-    cursor.close()
-    connection.close()
+        #user_identities table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS user_identities (
+                id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                user_id BIGINT NOT NULL,
+                provider VARCHAR(30) NOT NULL,
+                provider_user_id VARCHAR(255) NOT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+                FOREIGN KEY (user_id)
+                    REFERENCES users(id)
+                    ON DELETE CASCADE,
+
+                UNIQUE (provider, provider_user_id)
+            )
+        """)
+
+        #Create index for user identity lookups
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_user_identities_user_id
+            ON user_identities(user_id)
+        """)
+
+        # 4. Create transactions table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS transactions (
+                id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                user_id BIGINT NOT NULL,
+                trans_type VARCHAR(20) NOT NULL,
+                amount NUMERIC(15, 2) NOT NULL,
+                category VARCHAR(100) NOT NULL,
+                note TEXT,
+                transaction_date DATE NOT NULL DEFAULT CURRENT_DATE,
+
+                FOREIGN KEY (user_id)
+                    REFERENCES users(id)
+                    ON DELETE CASCADE
+            )
+        """)
+
+        #composite index for transaction queries
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_transactions_user_date
+            ON transactions(user_id, transaction_date DESC)
+        """)
+
+        connection.commit()
+
+    except Exception:
+        connection.rollback()
+        raise
+
+    finally:
+        cursor.close()
+        connection.close()
 
 def load_transactions():
     start = time.time()
